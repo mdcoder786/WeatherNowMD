@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WeatherNow 🌤️</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #9face6);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .weather-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 12px;
+      width: 80%;
+      margin-bottom: 15px;
+      text-align: center;
+      outline: none;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 10px 25px;
+      border: none;
+      border-radius: 12px;
+      background: #0078ff;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #005fcc;
+    }
+
+    .result {
+      margin-top: 20px;
+      line-height: 1.6;
+      font-size: 1.1rem;
+    }
+
+    .icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 10px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      text-align: center;
+    }
+
+    footer span {
+      display: block;
+      font-size: 0.85rem;
+      color: #fff;
+      margin-top: 5px;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <h1>🌤️ WeatherNow</h1>
+  <div class="weather-card">
+    <input type="text" id="city" placeholder="Enter city name..." />
+    <br />
+    <button onclick="getWeather()">Check Weather</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <footer>
+    Powered by Open-Meteo API (No Key Needed)
+    <span>💻 Made by <b>Md Shoib Iqbal</b></span>
+  </footer>
+
+  <script>
+    async function getWeather() {
+      const city = document.getElementById("city").value.trim();
+      const result = document.getElementById("result");
+
+      if (!city) {
+        result.innerHTML = "<p>Please enter a city name 🌍</p>";
+        return;
+      }
+
+      result.innerHTML = "<p>Loading weather data...</p>";
+
+      try {
+        // Step 1: Geocoding
+        const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${city}`;
+        const geoRes = await fetch(geoUrl);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results) {
+          result.innerHTML = "<p>❌ City not found.</p>";
+          return;
+        }
+
+        const { latitude, longitude, name, country } = geoData.results[0];
+
+        // Step 2: Get weather
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+        const weatherRes = await fetch(weatherUrl);
+        const weatherData = await weatherRes.json();
+        const w = weatherData.current_weather;
+
+        // Step 3: Icon selector
+        const icons = {
+          0: "☀️",
+          1: "🌤️",
+          2: "⛅",
+          3: "☁️",
+          45: "🌫️",
+          48: "🌫️",
+          51: "🌦️",
+          61: "🌧️",
+          71: "❄️",
+          80: "🌧️",
+          95: "⛈️"
+        };
+        const icon = icons[w.weathercode] || "🌈";
+
+        result.innerHTML = `
+          <div class="icon">${icon}</div>
+          <h2>${name}, ${country}</h2>
+          <p>🌡️ <b>${w.temperature}°C</b></p>
+          <p>💨 Wind Speed: ${w.windspeed} km/h</p>
+          <p>🕒 Time: ${new Date(w.time).toLocaleTimeString()}</p>
+        `;
+      } catch (err) {
+        result.innerHTML = "<p>⚠️ Error fetching weather data.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
